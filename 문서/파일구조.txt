@@ -1,0 +1,135 @@
+my-project/
+├── backend/                # FastAPI 서버
+│   ├── app/
+│   │   ├── main.py         # 서버 실행 및 기본 설정
+│   │   ├── api/            # API 엔드포인트 (Route)
+│   │   │   ├── auth.py     # 로그인/회원가입
+│   │   │   ├── posts.py    # 사진 업로드/블로그 게시물
+│   │   │   └── maps.py     # 지도 마커 데이터 전송
+│   │   ├── core/           # 공통 설정 (DB 연결, 환경변수)
+│   │   ├── models/         # DB 테이블 정의 (장고의 models.py)
+│   │   ├── schemas/        # Pydantic 모델 (입출력 데이터 검증)
+│   │   ├── services/       # 비즈니스 로직 (사진 처리, 계산 등)
+│   │   └── uploads/        # 실제 사진 파일이 저장될 폴더
+│   ├── requirements.txt
+│   └── .env                # DB 비번 등 보안 정보
+└── frontend/               # React (Vite)
+    ├── src/
+    │   ├── api/            # axios 등 서버 통신 로직 모음
+    │   ├── components/     # 공통 UI 컴포넌트 (버튼, 네비바 등)
+    │   ├── pages/          # 실제 화면 단위 (중요!)
+    │   │   ├── Home.jsx    # 메인/블로그 리스트
+    │   │   ├── Map.jsx     # 아까 만든 지도 화면
+    │   │   ├── Camera.jsx  # 사진 촬영 및 업로드 페이지
+    │   │   └── Detail.jsx  # 동식물 상세 정보 페이지
+    │   ├── App.jsx         # 라우팅 설정 (페이지 이동)
+    │   └── main.jsx
+    └── package.json
+
+
+backend/
+├── main.py             # App.jsx (중앙 통제실)
+├── database.py         # DB 연결 설정
+├── database_models.py  # DB 테이블 정의
+├── biology_info.py     # 생물 데이터 정보
+└── routers/            # 각 기능 페이지 (폴더로 관리)
+    ├── map.py          # 지도 관련 API
+    └── biology.py      # 생물 인식 관련 API
+
+frontend/
+├── public/
+├── src/
+│   ├── components/      # (공통 부품) 버튼, 네비게이션 바, 카드 등
+│   ├── pages/           # (진짜 페이지) 지도 페이지, AI 분석 페이지 등
+│   │   ├── MapPage.jsx
+│   │   └── BiologyPage.jsx
+│   ├── App.jsx          # (중앙 통제실) 라우팅 설정
+│   ├── main.jsx         # 리액트 시작점
+│   └── api.js           # (선택) Axios 설정 등 백엔드 통신 로직 모음
+├── package.json
+└── ...
+
+
+
+# 1. PyTorch와 TorchVision 설치 (AI 모델 실행 필수)
+pip install torch torchvision
+
+# 2. PIL (이미지 처리 라이브러리 - 실제 패키지명은 Pillow입니다)
+pip install Pillow
+
+# 3. 그 외 코드에 필요한 라이브러리들
+pip install pandas sqlalchemy python-dotenv
+
+
+
+
+===========================================================
+🚀 AI-TEAM 프로젝트 개발 프로세스 & 실행 매뉴얼
+===========================================================
+
+1. 초기 환경 세팅 (최초 1회)
+-----------------------------------------------------------
+[백엔드 - FastAPI 기초 세팅]
+  1) 폴더 이동: cd backend
+  2) 가상환경 생성: python -m venv .venv
+  3) 가상환경 활성화: .venv\Scripts\activate (Windows 기준)
+  4) 필수 패키지 설치: 
+     pip install fastapi uvicorn sqlalchemy pydantic python-multipart
+
+  5) ★핵심: 서버 파일 만들기 (이게 없어서 에러난 겁니다!)★
+     - backend 폴더 안에 [app]이라는 이름의 새 폴더를 만드세요.
+     - [app] 폴더 안에 [main.py] 파일을 만드세요.
+     - main.py 안에 아래 코드를 복사해서 넣으세요:
+       --------------------------------------
+       from fastapi import FastAPI
+       app = FastAPI()
+
+       @app.get("/")
+       def read_root():
+           return {"Hello": "World"}
+       --------------------------------------
+
+  6) 서버 실행: 
+     uvicorn app.main:app --reload --port 8001
+
+[프론트엔드 - React/Vite 진짜 순서]
+  1) 폴더 이동: cd frontend
+  2) 뼈대 만들기: npm create vite@latest . -- --template react
+     (여기서 Ignore 질문 나오면 Ignore 선택!)
+  3) 라이브러리 설치: npm install
+  4) 지도 도구 설치(필요할때만설치): npm install react-leaflet leaflet leaflet.markercluster
+  5) 실행: npm run dev
+
+
+2. 서버 실행 방법 (개발 시 매번 수행)
+-----------------------------------------------------------
+💡 주의: 백엔드와 프론트엔드 터미널을 각각 하나씩 열어서 실행해야 합니다.
+
+[백엔드 서버 실행]
+  1) 위치: /backend
+  2) 가상환경 활성화 확인 (.venv)
+  3) 명령: uvicorn app.main:app --reload --port 8001
+  가장 기본 실행문 : uvicorn main:app --reload
+  4) 확인: http://localhost:8001/docs (Swagger 문서)
+
+[프론트엔드 서버 실행]
+  1) 위치: /frontend
+  2) 명령: npm run dev
+  3) 확인: 터미널에 뜬 로컬 주소 (예: http://localhost:5173)
+
+
+3. 향후 개발 우선순위 (진행 단계)
+-----------------------------------------------------------
+STEP 1: [DB 설계] SQLAlchemy를 이용한 동식물 정보 테이블 정의
+STEP 2: [이미지 서버] FastAPI에서 static 파일 설정 (사진 접근용)
+STEP 3: [사진 업로드 API] 사진 촬영 시 GPS 정보와 함께 DB 저장 로직 구현
+STEP 4: [지도 연동] 저장된 GPS 데이터를 React 지도로 불러와 클러스터링
+STEP 5: [모바일 최적화] 스마트폰 브라우저에서 카메라 및 GPS 권한 테스트
+
+
+4. 팁: VSCode 단축키
+-----------------------------------------------------------
+- 새 터미널 열기: Ctrl + Shift + `
+- 터미널 나누기: 터미널 창 우측 상단 'Split Terminal' 아이콘
+- 전체 파일 검색: Ctrl + Shift + F
+===========================================================

@@ -1,0 +1,9 @@
+컬럼명,타입,설명
+id,Integer,고유 번호 (Primary Key)
+flower_name,String,AI가 분석한 꽃 이름
+latitude,Float,촬영 당시 위도 (GPS)
+longitude,Float,촬영 당시 경도 (GPS)
+image_url,String,저장된 사진 경로
+user_id,String,사진 찍은 사람 ID (카카오/구글 로그인 등)
+created_at,DateTime,등록 시간
+
