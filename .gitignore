@@ -1,3 +1,15 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+
+# Backend
+backend/__pycache__/
+backend/venv/
+.env
+
+
 # --- Python (FastAPI) 관련 ---
 __pycache__/
 *.py[cod]
