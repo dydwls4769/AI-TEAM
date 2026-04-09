@@ -13,6 +13,13 @@ from ultralytics import YOLO
 
 router = APIRouter()
 
+# 이미지를 저장할 경로 설정
+UPLOAD_DIR = "uploads"
+
+# 폴더가 없으면 생성
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
 # --- 1. 모델 로드 부분 (이름을 명확히 구분하세요) ---
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
