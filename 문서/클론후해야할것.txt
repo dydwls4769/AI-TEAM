@@ -1,0 +1,36 @@
+📝 프로젝트 이동 및 실행 가이드
+# 깃허브에서 클론으로 처음 받으면 백엔드 가상환경과 프론트엔드 node_modules 가 없으며 다음과 같이 해야 한다.
+
+[Step 1] 백엔드 가상환경 만들기
+vscode에서 프로젝트 폴더를 열고 터미널에서 backend 폴더로 이동하여 명령어를 실행해야 한다.
+python -m venv .venv
+가상환경 켜기: .\.venv\Scripts\activate (윈도우 전용)
+패키지 한방 설치: pip install -r requirements.txt
+패키지 저장할때는 pip freeze > requirements.txt
+백엔드는 프론드엔드와 다르게 수동으로 해줘야하고 저장 안했다면 일일이 에러에 따라 설치해줘야 한다.
+서버 실행: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+[Step 2] 프론트엔드 (Frontend - Vite 기준)
+꼭 터미널을 하나더 만들고 꼭 frontend 폴더로 이동하여 명령어를 실행해야 한다.
+패키지 설치: npm install
+npm install 를 실행하면 추가한 패키지들도 node_modules 에 같이 설치해 준다.
+package.json, package-lock.json 파일이 백엔드의 requirements.txt 를 대신한다.
+서버 실행: npm run dev -- --host (외부 접속 허용 옵션)
+
+# 아래부터는 미구현 부분이 있으므로 참고만
+
+[Step 3] 모바일 (Mobile - Expo) - 현재 미구현
+패키지 설치: npm install
+서버 실행: npx expo start (QR 코드가 나오면 성공)
+
+
+4. 그 밖의 필수 체크리스트 (핵심!)
+.env 파일 챙기기: .gitignore 때문에 깃허브에 안 올라갔을 겁니다. 이 파일은 따로 복사하거나 새로 만들어서 그 컴퓨터의 IP를 적어줘야 합니다.
+이미지 저장 폴더: 만약 사진을 저장하는 폴더(예: uploads/)를 만드셨다면, 그 폴더가 비어있더라도 폴더 자체는 생성해둬야 에러가 안 납니다.
+파이썬 버전: 가급적 맥미니와 학원 컴퓨터의 파이썬 버전을 비슷하게 맞추는 게 좋습니다 (예: 3.10 이상).
+Expo Go 앱: 폰에는 이미 깔려 있을 테니, 학원 와이파이와 학원 컴퓨터가 같은 망에 있는지 확인만 하면 됩니다.
+
+전송: python-multipart가 사용자가 보낸 이미지 파일을 서버가 읽을 수 있게 해줍니다.
+분석: torch와 torchvision이 이미지를 읽어 "까치"인지 "참새"인지 숫자로 계산합니다.
+매칭: biology_info.py에서 그 숫자에 맞는 이름과 설명을 가져옵니다.
+기록: SQLAlchemy가 이 모든 텍스트 정보와 이미지 경로를 biolab.db 파일에 "착!" 하고 저장합니다.
