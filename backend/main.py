@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 import database_models
 from routers import map, biology
+import uvicorn
 
 app = FastAPI()
 
@@ -25,3 +26,7 @@ app.include_router(biology.router, prefix="/biology", tags=["생물인식"])
 @app.get("/")
 def root():
     return {"message": "통합 API 서버 정상 작동 중!"}
+
+if __name__ == "__main__":
+    # 여기 0.0.0.0으로 고정해두면 python main.py만 쳐도 항상 외부 접속 허용!
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

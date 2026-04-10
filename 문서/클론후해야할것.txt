@@ -10,7 +10,8 @@ python3.10 -m venv .venv
 패키지 저장할때는 pip freeze > requirements.txt
 백엔드는 프론드엔드와 다르게 수동으로 해줘야하고 저장 안했다면 일일이 에러에 따라 설치해줘야 한다.
 pip install fastapi uvicorn ultralytics torch torchvision opencv-python-headless
-서버 실행: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+서버 실행: uvicorn main:app --reload --port 8001
+서버 실행(외부접속 필요시): uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
 [Step 2] 프론트엔드 (Frontend - Vite 기준)
 꼭 터미널을 하나더 만들고 꼭 frontend 폴더로 이동하여 명령어를 실행해야 한다.
