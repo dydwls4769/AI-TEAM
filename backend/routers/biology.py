@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 import os, uuid
-from PIL import Image
+from PIL import Image, ImageOps
 from io import BytesIO
 from database import get_db
 import database_models
@@ -15,21 +15,19 @@ router = APIRouter()
 
 # 이미지를 저장할 경로 설정
 UPLOAD_DIR = "uploads"
-
-# 폴더가 없으면 생성
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
-# --- 1. 모델 로드 부분 (이름을 명확히 구분하세요) ---
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+# --- 1. 모델 로드 (가속 장치 확인) ---
+device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 # 생물 분류용 모델 (ResNet18)
 classifier_model = models.resnet18()
-classifier_model.fc = nn.Linear(classifier_model.fc.in_features, 5) # 현재 5개 학습됨
+classifier_model.fc = nn.Linear(classifier_model.fc.in_features, 5) 
 classifier_model.load_state_dict(torch.load("biology_model.pt", map_location=device))
 classifier_model = classifier_model.to(device).eval()
 
-# 사물 검출용 모델 (YOLO)
+# 사물 검출용 모델 (YOLO) - [기존 유지]
 yolo_model = YOLO('yolov8n.pt') 
 
 # 전처리 설정
@@ -39,27 +37,53 @@ preprocess = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# --- 2. API 엔드포인트 ---
+# --- 2. 도움 함수 (친구분의 Smart Predict 로직) ---
 
-# [1단계] 사진을 올리면 사물들의 '위치'만 알려주는 API
-@router.post("/detect")
-async def detect_objects(file: UploadFile = File(...)):
-    image_bytes = await file.read()
-    img = Image.open(BytesIO(image_bytes))
-    
-    results = yolo_model(img)
-    
-    detections = []
-    for box in results[0].boxes:
-        detections.append({
-            "label": results[0].names[int(box.cls)], 
-            "confidence": float(box.conf),
-            "box": box.xyxy[0].tolist() # [x1, y1, x2, y2]
-        })
-    
-    return {"objects": detections}
+def predict_crop(img):
+    """단일 이미지 조각 예측"""
+    input_tensor = preprocess(img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        outputs = classifier_model(input_tensor)
+        probs = torch.nn.functional.softmax(outputs, dim=1)
+        confidence, pred = torch.max(probs, 1)
+    return pred.item(), confidence.item()
 
-# [2단계] 선택된 이미지를 실제로 분석하고 DB에 저장하는 API
+def smart_predict(img):
+    """멀티 크롭 + 가중 투표 (인식률 향상의 핵심)"""
+    w, h = img.size
+    results = []
+    
+    # 1. 세로 스트립 (서 있는 새 등에 효과적)
+    strips = [(0.40, 8.0), (0.35, 7.5), (0.45, 7.5), (0.50, 7.0)]
+    for w_ratio, weight in strips:
+        crop_w = int(w * w_ratio)
+        left = (w - crop_w) // 2
+        cropped = img.crop((left, 0, left + crop_w, h))
+        pred, conf = predict_crop(cropped)
+        results.append((pred, conf * weight))
+    
+    # 2. 중앙 크롭 (보조)
+    for ratio, weight in [(0.50, 4.0), (0.40, 4.5)]:
+        size = int(min(w, h) * ratio)
+        left, top = (w - size) // 2, (h - size) // 2
+        cropped = img.crop((left, top, left + size, top + size))
+        pred, conf = predict_crop(cropped)
+        results.append((pred, conf * weight))
+    
+    # 3. 전체 이미지 (낮은 가중치)
+    pred, conf = predict_crop(img)
+    results.append((pred, conf * 0.1))
+    
+    # 클래스별 점수 합산
+    scores = {}
+    for pred, weighted_score in results:
+        scores[pred] = scores.get(pred, 0) + weighted_score
+    
+    best_idx = max(scores, key=scores.get)
+    return class_names[best_idx]
+
+# --- 3. API 엔드포인트 ---
+
 @router.post("/predict")
 async def predict(
     file: UploadFile = File(...), 
@@ -67,42 +91,39 @@ async def predict(
     lng: float = Form(...), 
     db: Session = Depends(get_db)):
     
+    # 이미지 읽기
     image_bytes = await file.read()
     file_extension = file.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
-    file_path = os.path.join("uploads", unique_filename)
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
     img = Image.open(BytesIO(image_bytes)).convert("RGB")
+
+    # EXIF 정보를 바탕으로 사진을 올바른 방향으로 자동 회전 시킵니다.
+    img = ImageOps.exif_transpose(img)
     
-    # 이미지 저장
+    # 원본 저장용 (thumbnail)
     save_img = img.copy()
     save_img.thumbnail((800, 800))
     save_img.save(file_path, optimize=True, quality=85)
 
-    # 진짜 AI 분석 (ResNet18 사용)
-    input_tensor = preprocess(img).unsqueeze(0).to(device)
-    with torch.no_grad():
-        outputs = classifier_model(input_tensor) # classifier_model로 이름 변경됨!
-        _, preds = torch.max(outputs, 1)
-        label = class_names[preds[0]]
+    # AI 분석 (친구분의 smart_predict 적용!)
+    label = smart_predict(img)
 
-    # DB 정보 가져오기 및 저장
+    # 정보 가져오기
     info = biology_data.get(label, {"name": "알 수 없음", "habitat": "정보 없음", "description": "분석 실패"})
- 
-    # 1. AI가 예측한 영문 label로 Species 테이블에서 해당 생물의 ID를 조회합니다.
-    # biology_data[label]["name"]은 "왜가리" 같은 한글 이름입니다.
     kor_name = info["name"]
+
+    # DB 저장 (우리가 맞춘 Post 모델 구조 유지)
     species_record = db.query(database_models.Species).filter(database_models.Species.name == kor_name).first()
 
     if not species_record:
-        # 혹시 seed 데이터에 없는 생물이 예측되었다면 에러를 방지하기 위해 처리
         return {"error": "도감 정보가 존재하지 않는 생물입니다."}
 
-    # 2. BiologyLog 대신 Post 모델을 생성합니다.
     new_post = database_models.Post(
-        user_id=1,  # User 테이블의 기본값 (임시)
-        species_id=species_record.id,  # 찾은 생물의 ID(PK)를 넣어줍니다.
-        image_url=f"/uploads/{unique_filename}", # DB 필드명에 맞춰 image_url 사용
+        user_id=1, 
+        species_id=species_record.id,
+        image_url=f"/uploads/{unique_filename}",
         latitude=lat,
         longitude=lng
     )
@@ -119,21 +140,21 @@ async def predict(
         "image_url": f"/uploads/{unique_filename}"
     }
 
+# 기존 /logs 및 /detect 엔드포인트는 그대로 유지하시면 됩니다.
+@router.post("/detect")
+async def detect_objects(file: UploadFile = File(...)):
+    image_bytes = await file.read()
+    img = Image.open(BytesIO(image_bytes))
+    results = yolo_model(img)
+    detections = []
+    for box in results[0].boxes:
+        detections.append({
+            "label": results[0].names[int(box.cls)], 
+            "confidence": float(box.conf),
+            "box": box.xyxy[0].tolist()
+        })
+    return {"objects": detections}
+
 @router.get("/logs")
 def get_logs(db: Session = Depends(get_db)):
-    """
-    DB에 저장된 모든 생물 탐지 기록을 가져옵니다.
-    나중에 리액트 지도에서 이 데이터를 호출해서 핀을 꽂게 됩니다.
-    """
-    # BiologyLog -> Post로 변경
-    logs = db.query(database_models.Post).all()
-    return logs
-
-@router.get("/logs/{log_id}")
-def get_log_detail(log_id: int, db: Session = Depends(get_db)):
-    """
-    특정 기록 하나만 자세히 보고 싶을 때 사용합니다.
-    """
-    # BiologyLog -> Post로 변경
-    log = db.query(database_models.Post).filter(database_models.Post.id == log_id).first()
-    return log
+    return db.query(database_models.Post).all()

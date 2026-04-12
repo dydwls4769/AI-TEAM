@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from database import get_db
-import database_models
-# import database_models as models
+# import database_models
+import database_models as models
 import uuid
 import os
 
@@ -15,7 +15,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.get("/")
 def get_all_posts(db: Session = Depends(get_db)):
     # Post 테이블의 모든 데이터를 가져와서 리턴합니다.
-    posts = db.query(database_models.Post).all()
+    # posts = db.query(database_models.Post).all()
+    # .desc()를 추가해서 최신순(생성일 내림차순)으로 정렬합니다.
+    posts = db.query(models.Post).order_by(models.Post.created_at.desc()).all()
     return posts
 
 @router.post("/upload")

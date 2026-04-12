@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function BlogPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const currentHost = window.location.hostname;
-        // 백엔드 routers/blog.py에서 목록 조회 API가 있다고 가정
-        const response = await axios.get(`http://${currentHost}:8001/blog/`);
+        // 최신순 정렬은 백엔드에서 처리해주는 것이 가장 좋지만, 
+        // 여기서도 한번 더 확인하도록 호출합니다.
+        const response = await axios.get(`http://${currentHost}:8001/api/observations`); 
         setPosts(response.data);
       } catch (error) {
         console.error("데이터 로딩 실패:", error);
@@ -21,46 +24,33 @@ function BlogPage() {
     fetchPosts();
   }, []);
 
-  if (loading) return <div style={styles.loading}>도감을 불러오는 중... 🌿</div>;
+  if (loading) return <div style={styles.loading}>탐사 기록을 불러오는 중...</div>;
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <h2 style={styles.title}>생물도감 피드</h2>
-      </header>
+      {/* 상단 헤더 */}
+      <div style={styles.header}>
+        <span style={styles.headerTitle}>생물 탐사 피드</span>
+      </div>
 
-      <div style={styles.feed}>
-        {posts.length === 0 ? (
-          <p style={styles.empty}>아직 등록된 도감이 없어요. 첫 발견자가 되어보세요!</p>
-        ) : (
+      {/* 3열 그리드 피드 */}
+      <div style={styles.gridContainer}>
+        {posts.length > 0 ? (
           posts.map((post) => (
-            <div key={post.id} style={styles.card}>
-              {/* 유저 정보 영역 */}
-              <div style={styles.userInfo}>
-                <div style={styles.avatar}>🌱</div>
-                <span style={styles.userName}>{post.nickname || "익명의 발견자"}</span>
-              </div>
-
-              {/* 이미지 영역 */}
+            <div 
+              key={post.id} 
+              style={styles.gridItem} 
+              onClick={() => navigate(`/blog/${post.id}`)}
+            >
               <img 
                 src={`http://${window.location.hostname}:8001${post.image_url}`} 
                 alt={post.species_name} 
-                style={styles.image} 
+                style={styles.image}
               />
-
-              {/* 콘텐츠 영역 */}
-              <div style={styles.content}>
-                <div style={styles.speciesBadge}>#{post.species_name}</div>
-                <p style={styles.location}>📍 {post.location_name || "관찰 위치"}</p>
-                <p style={styles.date}>{new Date(post.created_at).toLocaleDateString()}</p>
-                
-                {/* AI 보정 이력이 있다면 표시 (추후 확장용) */}
-                {post.has_ai_log && (
-                  <span style={styles.aiTag}>✨ AI 고화질 보정됨</span>
-                )}
-              </div>
             </div>
           ))
+        ) : (
+          <div style={styles.noData}>아직 등록된 기록이 없습니다.</div>
         )}
       </div>
     </div>
@@ -69,51 +59,55 @@ function BlogPage() {
 
 const styles = {
   container: {
-    backgroundColor: '#fafafa',
+    backgroundColor: '#fff',
     minHeight: '100vh',
+    paddingBottom: '70px', // 하단 네비게이션 바 공간 확보
   },
   header: {
-    padding: '15px',
-    backgroundColor: '#fff',
+    height: '50px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderBottom: '1px solid #efefef',
     position: 'sticky',
     top: 0,
-    zIndex: 10,
-    textAlign: 'center',
-  },
-  title: { fontSize: '18px', margin: 0, color: '#2e7d32' },
-  feed: { padding: '10px' },
-  card: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    marginBottom: '20px',
-    border: '1px solid #efefef',
-    overflow: 'hidden',
+    zIndex: 10,
   },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px',
-  },
-  avatar: { width: '30px', height: '30px', marginRight: '10px', fontSize: '20px' },
-  userName: { fontWeight: '600', fontSize: '14px' },
-  image: { width: '100%', aspectRatio: '1/1', objectFit: 'cover' },
-  content: { padding: '15px' },
-  speciesBadge: {
-    display: 'inline-block',
-    padding: '4px 10px',
-    backgroundColor: '#e8f5e9',
-    color: '#2e7d32',
-    borderRadius: '20px',
-    fontSize: '13px',
+  headerTitle: {
     fontWeight: 'bold',
-    marginBottom: '8px',
+    fontSize: '16px',
+    color: '#333',
   },
-  location: { margin: '5px 0', fontSize: '13px', color: '#666' },
-  date: { fontSize: '11px', color: '#999', marginTop: '5px' },
-  aiTag: { fontSize: '11px', color: '#4caf50', fontWeight: 'bold' },
-  loading: { textAlign: 'center', marginTop: '50px', color: '#666' },
-  empty: { textAlign: 'center', marginTop: '50px', color: '#999' }
+  gridContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)', // 한 줄에 3개씩
+    gap: '2px', // 인스타그램 스타일의 미세한 여백
+  },
+  gridItem: {
+    aspectRatio: '1 / 1', // 정사각형 유지
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+    cursor: 'pointer',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover', // 찌그러짐 방지
+    display: 'block',
+  },
+  loading: {
+    textAlign: 'center',
+    marginTop: '50px',
+    color: '#999',
+    fontSize: '14px',
+  },
+  noData: {
+    gridColumn: 'span 3',
+    textAlign: 'center',
+    marginTop: '100px',
+    color: '#999',
+  }
 };
 
 export default BlogPage;

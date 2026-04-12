@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import BlogPage from './pages/BlogPage';
+import BlogDetail from './pages/BlogDetail';
 import MapPage from './pages/MapPage';
 import BioScanPage from './pages/BioScanPage'; // 이름 변경 반영
+
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/biology" element={<BioScanPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:id" element={<BlogDetail />} /> {/* 상세 페이지 추가 */}
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
