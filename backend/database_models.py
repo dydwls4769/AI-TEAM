@@ -1,38 +1,56 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
 
-# 1. 생물 백과사전 테이블 (중복 방지용)
-class BiologyInfo(Base):
-    __tablename__ = "biology_info"
-    
-    # 생물 이름 자체를 기본키(PK)로 써서 중복 등록을 막습니다.
-    species = Column(String, primary_key=True) 
-    description = Column(String)  # 상세 설명 (한 번만 저장)
-    habitat = Column(String)      # 서식지 (한 번만 저장)
-    
-    # Log 테이블과의 연결 고리
-    logs = relationship("BiologyLog", back_populates="info")
-
-# 2. 사용자의 촬영 기록 테이블
-class BiologyLog(Base):
-    __tablename__ = "biology_logs"
-
+# 1. 사용자 테이블 (추후 로그인 기능 대비)
+class User(Base):
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
+    user_uid = Column(String, unique=True, index=True) # 기기 고유값 또는 ID
+    nickname = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+    posts = relationship("Post", back_populates="author")
+
+# 2. 생물 종 백과사전 (도감 데이터)
+class Species(Base):
+    __tablename__ = "species"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True) # 생물 이름 (중복 방지)
+    category = Column(String)                      # 식물, 동물, 곤충 등
+    habitat = Column(String)                       # 서식지 정보
+    description = Column(Text)                     # 상세 설명
     
-    # 어떤 생물인지 이름만 기록 (BiologyInfo의 species를 참조)
-    species_name = Column(String, ForeignKey("biology_info.species"))
+    posts = relationship("Post", back_populates="species_info")
+
+# 3. 게시글 (촬영 기록 및 위치 정보)
+class Post(Base):
+    __tablename__ = "posts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    species_id = Column(Integer, ForeignKey("species.id"))
     
-    # 촬영 정보
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
-    image_path = Column(String)
+    image_url = Column(String)      # 원본 이미지 경로
+    latitude = Column(Float)        # 위도
+    longitude = Column(Float)       # 경도
+    created_at = Column(DateTime, default=datetime.now)
+
+    # 관계 설정
+    author = relationship("User", back_populates="posts")
+    species_info = relationship("Species", back_populates="posts")
+    image_logs = relationship("ImageLog", back_populates="parent_post")
+
+# 4. 이미지 변형 이력 (AI 처리 결과물)
+class ImageLog(Base):
+    __tablename__ = "image_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.id"))
     
-    # 사용자 구분을 위한 고유 ID (로그인 없이 기기별 생성값)
-    user_uid = Column(String, index=True) 
+    original_url = Column(String)   # 변형 전 이미지
+    processed_url = Column(String)  # 변형 후(화질개선/색상변경 등) 이미지
+    filter_type = Column(String)    # 적용된 모델/필터 이름 (예: 'SR-GAN', 'Grayscale')
     
     created_at = Column(DateTime, default=datetime.now)
 
-    # Info 테이블과의 연결
-    info = relationship("BiologyInfo", back_populates="logs")
+    parent_post = relationship("Post", back_populates="image_logs")

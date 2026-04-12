@@ -33,7 +33,9 @@ my-project/
 │  ├── database.py         # DB 연결 설정
 │  ├── database_models.py  # DB 테이블 정의
 │  ├── biology_info.py     # 생물 데이터 정보
+│  ├── admin.py           # <--- 여기에 sqladmin 설정을 몰아넣기
 │  └── routers/            # 각 기능 페이지 (폴더로 관리)
+│      ├── blog.py         # 블로그 관련 API
 │      ├── map.py          # 지도 관련 API
 │      └── biology.py      # 생물 인식 관련 API
 │
@@ -42,6 +44,7 @@ my-project/
 │  ├── src/
 │  │   ├── components/      # (공통 부품) 버튼, 네비게이션 바, 카드 등
 │  │   ├── pages/           # (진짜 페이지) 지도 페이지, AI 분석 페이지 등
+│  │   │   ├── BlogPage.jsx
 │  │   │   ├── MapPage.jsx
 │  │   │   └── BiologyPage.jsx
 │  │   ├── App.jsx          # (중앙 통제실) 라우팅 설정

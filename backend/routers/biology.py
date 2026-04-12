@@ -88,31 +88,36 @@ async def predict(
 
     # DB 정보 가져오기 및 저장
     info = biology_data.get(label, {"name": "알 수 없음", "habitat": "정보 없음", "description": "분석 실패"})
+ 
+    # 1. AI가 예측한 영문 label로 Species 테이블에서 해당 생물의 ID를 조회합니다.
+    # biology_data[label]["name"]은 "왜가리" 같은 한글 이름입니다.
+    kor_name = info["name"]
+    species_record = db.query(database_models.Species).filter(database_models.Species.name == kor_name).first()
 
-    new_log = database_models.BiologyLog(
-        species_name=info["name"],
-        image_path=file_path,
-        # habitat=info["habitat"],
-        # description=info["description"],
+    if not species_record:
+        # 혹시 seed 데이터에 없는 생물이 예측되었다면 에러를 방지하기 위해 처리
+        return {"error": "도감 정보가 존재하지 않는 생물입니다."}
+
+    # 2. BiologyLog 대신 Post 모델을 생성합니다.
+    new_post = database_models.Post(
+        user_id=1,  # User 테이블의 기본값 (임시)
+        species_id=species_record.id,  # 찾은 생물의 ID(PK)를 넣어줍니다.
+        image_url=f"/uploads/{unique_filename}", # DB 필드명에 맞춰 image_url 사용
         latitude=lat,
-        longitude=lng,
-        user_uid="anonymous_tester"  # 👈 일단 모두가 같은 아이디로 저장
-        # user_uid="guest_user",
-        # description과 habitat은 BiologyInfo 테이블로 분리했으므로 
-        # Log 테이블 생성 시에는 넣지 않습니다.
+        longitude=lng
     )
-    db.add(new_log)
+    
+    db.add(new_post)
     db.commit()
-    db.refresh(new_log)
+    db.refresh(new_post)
 
     return {
-        "id": new_log.id,
+        "id": new_post.id,
         "prediction": info["name"],
         "description": info["description"],
         "habitat": info["habitat"],
         "image_url": f"/uploads/{unique_filename}"
     }
-
 
 @router.get("/logs")
 def get_logs(db: Session = Depends(get_db)):
@@ -120,10 +125,8 @@ def get_logs(db: Session = Depends(get_db)):
     DB에 저장된 모든 생물 탐지 기록을 가져옵니다.
     나중에 리액트 지도에서 이 데이터를 호출해서 핀을 꽂게 됩니다.
     """
-    # 1. DB에서 모든 기록을 쿼리(질의)합니다.
-    logs = db.query(database_models.BiologyLog).all()
-    
-    # 2. 만약 결과가 없다면 빈 리스트 [] 를 반환하고, 있으면 리스트를 반환합니다.
+    # BiologyLog -> Post로 변경
+    logs = db.query(database_models.Post).all()
     return logs
 
 @router.get("/logs/{log_id}")
@@ -131,5 +134,6 @@ def get_log_detail(log_id: int, db: Session = Depends(get_db)):
     """
     특정 기록 하나만 자세히 보고 싶을 때 사용합니다.
     """
-    log = db.query(database_models.BiologyLog).filter(database_models.BiologyLog.id == log_id).first()
+    # BiologyLog -> Post로 변경
+    log = db.query(database_models.Post).filter(database_models.Post.id == log_id).first()
     return log

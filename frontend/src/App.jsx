@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import BlogPage from './pages/BlogPage';
 import MapPage from './pages/MapPage';
 import BioScanPage from './pages/BioScanPage'; // 이름 변경 반영
 
@@ -13,7 +14,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/biology" element={<BioScanPage />} />
-            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog" element={<BlogPage />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
@@ -33,7 +34,7 @@ function App() {
 
 // 간단한 페이지 컴포넌트들 (나중에 파일로 분리하세요!)
 const Home = () => <div style={styles.page}>기타/메인 화면</div>;
-const Blog = () => <div style={styles.page}>블로그 화면</div>;
+// const Blog = () => <div style={styles.page}>블로그 화면</div>;
 const Settings = () => <div style={styles.page}>설정 화면</div>;
 
 // 스타일 설정 (모바일 앱 느낌)
@@ -42,17 +43,18 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
-    overflow: 'hidden',
+    // overflow: 'hidden', // 혹시 모르니 이 줄은 그대로 두시거나 살짝 주석처리해보세요.
   },
   content: {
     flex: 1,
     overflowY: 'auto',
-    paddingBottom: '70px', // 네비게이션 높이만큼 여백
+    paddingBottom: '80px', // 네비바 높이보다 살짝 더 줘야 마지막 카드가 안 잘려요.
   },
   navBar: {
     position: 'fixed',
     bottom: 0,
-    width: '100%',
+    left: 0,           // 👈 화면 왼쪽 끝에 딱 붙임
+    right: 0,          // 👈 화면 오른쪽 끝에 딱 붙임
     height: '70px',
     backgroundColor: '#ffffff',
     display: 'flex',
@@ -63,10 +65,14 @@ const styles = {
     zIndex: 1000,
   },
   navItem: {
+    flex: 1,           // 👈 네비 버튼들이 가로 길이를 똑같이 나눠 갖게 함
     textDecoration: 'none',
     color: '#333',
     fontSize: '12px',
     textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   page: {
     padding: '20px',

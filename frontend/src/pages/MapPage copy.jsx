@@ -5,7 +5,7 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// 마커 아이콘 버그 수정용 설정
+// 마커 아이콘 설정
 let DefaultIcon = L.icon({
     iconUrl: icon,
     shadowUrl: iconShadow,
@@ -15,31 +15,12 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 function MapPage() {
-  // 1. 초기 상태 설정 (광주 시청)
-  const [mapCenter, setMapCenter] = useState([35.1595, 126.8526]);
-  const [zoomLevel, setZoomLevel] = useState(13);
   const [observations, setObservations] = useState([]);
-  const [isLibLoaded, setIsLibLoaded] = useState(false);
   const mapRef = useRef(null);
+  const [isLibLoaded, setIsLibLoaded] = useState(false);
 
   useEffect(() => {
-    // [A] 브라우저 현재 위치 가져오기
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log("📍 현재 위치 확인 성공:", latitude, longitude);
-          setMapCenter([latitude, longitude]);
-          setZoomLevel(15); // 내 위치면 더 확대
-        },
-        (error) => {
-          console.warn("⚠️ 위치 권한이 없거나 오류가 발생해 기본 위치를 사용합니다.");
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
-
-    // [B] 마커 클러스터 라이브러리 동적 로드
+    // 1. 클러스터 라이브러리 CSS/JS 로드
     const css = document.createElement('link');
     css.rel = 'stylesheet';
     css.href = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css';
@@ -51,20 +32,22 @@ function MapPage() {
     script.onload = () => setIsLibLoaded(true);
     document.body.appendChild(script);
 
-    // [C] 백엔드에서 관찰 데이터 호출
+    // 2. 데이터 가져오기
     const currentHost = window.location.hostname;
     fetch(`http://${currentHost}:8001/api/observations`)
       .then(res => res.json())
-      .then(data => setObservations(data))
-      .catch(err => console.error("❌ 데이터 로드 실패:", err));
+      .then(data => {
+        console.log("가져온 데이터:", data); // 데이터가 잘 오는지 확인용
+        setObservations(data);
+      })
+      .catch(err => console.error("데이터 로드 실패:", err));
   }, []);
 
-  // 마커 클러스터를 지도에 그리는 함수
   const renderClusters = () => {
     const map = mapRef.current;
     if (!map || !window.L || !window.L.markerClusterGroup || observations.length === 0) return;
 
-    // 기존 클러스터 레이어 제거 (중복 방지)
+    // 기존 레이어 청소
     map.eachLayer((layer) => {
       if (layer instanceof L.MarkerClusterGroup) map.removeLayer(layer);
     });
@@ -72,6 +55,7 @@ function MapPage() {
     const mg = new window.L.MarkerClusterGroup();
 
     observations.forEach(obs => {
+      // 위치 정보가 유효한지 꼼꼼하게 체크
       const lat = parseFloat(obs.lat);
       const lng = parseFloat(obs.lng);
       
@@ -93,26 +77,23 @@ function MapPage() {
     map.addLayer(mg);
   };
 
-  // 데이터나 라이브러리, 혹은 중심점이 바뀌면 다시 그리기
   useEffect(() => {
     renderClusters();
-  }, [observations, isLibLoaded, mapCenter]);
+  }, [observations, isLibLoaded]);
 
   return (
     <div style={{ height: "calc(100vh - 70px)", width: "100%" }}> 
-      {/* 💡 중요: key={mapCenter.join(',')} 를 넣어야 
-          좌표가 바뀌었을 때 지도가 해당 위치로 강제 이동(재렌더링)합니다. 
-      */}
       <MapContainer 
-        key={mapCenter.join(',')} 
-        center={mapCenter} 
-        zoom={zoomLevel} 
+        center={[35.1595, 126.8526]} // 광주광역시 시청 중심
+        zoom={13} 
         style={{ height: "100%", width: "100%" }}
         ref={mapRef}
       >
+        {/* <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" /> */}
         <TileLayer 
+          // url="https://api.vworld.kr/req/wmts/1.0.0/자신의API키/Base/{z}/{y}/{x}.png" 
+          // 키가 없다면 일단 아래 오픈 소스용 주소를 써보세요.
           url="https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="http://www.vworld.kr/">Vworld</a>'
         />
       </MapContainer>
     </div>

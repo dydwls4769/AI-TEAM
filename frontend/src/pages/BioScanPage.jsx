@@ -24,15 +24,17 @@ function BioScanPage() {
     let lat = null;
     let lng = null;
 
+    // BioScanPage.jsx의 이 부분을 잠시 수정해서 테스트해보세요
     try {
       const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        // 5초 안에 응답 없으면 에러 내도록 타임아웃 추가
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
       });
       lat = position.coords.latitude;
       lng = position.coords.longitude;
-      console.log("현재 위치:", lat, lng);
     } catch (err) {
-      console.log("위치 정보를 가져올 수 없습니다. 기본 위치로 저장합니다.");
+      console.error("GPS 가져오기 실패 원인:", err);
+      alert("위치 정보를 가져올 수 없습니다. 권한 설정을 확인해주세요.");
     }
 
     // 2. FormData에 사진과 함께 좌표 추가
@@ -67,7 +69,7 @@ function BioScanPage() {
       minHeight: '100vh',
       paddingBottom: '100px' // 하단 네비게이션에 가려지지 않게 여백 추가
     }}>
-      <h1 style={{ color: '#2e7d32', marginBottom: '10px' }}>🌳 우리동네 생물도감 🌳</h1>
+      <h2 style={{ color: '#2e7d32', marginBottom: '10px' }}>🌳 우리동네 생물도감 🌳</h2>
       <p style={{ color: '#666', marginBottom: '30px' }}>우리동네 생물을 찍으면 AI가 알려줘요!</p>
       
       <div style={{ 
