@@ -83,7 +83,7 @@ streamlit run Streamlit_Upload.py
 ## 이 문서 자체를 잃어버렸을 때
 
 본 마이그레이션 정보는 다음 위치에 분산 저장됨:
-1. `AI_Exercise_FullStack/MIGRATION_LOG.md` — 코드 매핑 상세
+1. `AI_Exercise_FullStack/MIGRATION_LOG.md` — 코드 매핑 상세 (로컬 PC에만 보관, GitHub에서는 제거됨)
 2. `AI_Exercise_FullStack/ROLLBACK.md` — 이 파일
 3. `AI_Exercise_FullStack/backend/README.md` — 실행 방법
-4. GitHub `dydwls4769/AI-TEAM` 의 커밋 히스토리
+4. GitHub `dydwls4769/AI-TEAM` 의 커밋 히스토리 (백업 브랜치 `before-fastapi-migration` 포함)
