@@ -1,8 +1,10 @@
 # Streamlit → FastAPI 마이그레이션 로그
 
 작성: 2026-04-27
-대상 원본: `Streamlit_Upload.py` (영상 업로드 + 점수 분석 모드)
+대상 원본: `legacy/Streamlit_Upload.py` (영상 업로드 + 점수 분석 모드)
 결과물: `backend/` (FastAPI 서버)
+
+> 원본은 GitHub 저장소의 `legacy/` 폴더에 보관되어 있습니다. 본 문서의 라인 번호는 그 파일을 기준으로 합니다.
 
 ---
 

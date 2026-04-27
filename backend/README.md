@@ -1,7 +1,10 @@
 # AI Exercise Pose Feedback — FastAPI Backend
 
 YOLOv5 + MediaPipe + Random Forest 파이프라인을 FastAPI 위에 올려둔 영상 자세 분석 서버입니다.
-원본 Streamlit 코드(`Streamlit_Upload.py`)의 핵심 로직(`analyze_video`, `compute_score_from_events`)을 그대로 포팅했습니다.
+원본 Streamlit 코드의 핵심 로직(`analyze_video`, `compute_score_from_events`)을 그대로 포팅했습니다.
+
+> 원본 Streamlit 앱(`Streamlit_Upload.py`)은 결과 비교/시각 확인용으로 `../legacy/` 에 보관되어 있습니다.
+> 라인별 매핑은 루트의 `MIGRATION_LOG.md`, 전체 설계 가이드는 `../docs/MIGRATION_FastAPI_React.md` 참조.
 
 ---
 
