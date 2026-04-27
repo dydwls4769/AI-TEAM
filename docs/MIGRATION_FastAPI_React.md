@@ -331,4 +331,3 @@ async def pose_stream(ws: WebSocket, sid: str):
 4. sklearn 버전 핀: 학습 시 버전 확인 후 requirements에 고정
 5. CORS 허용 origin (React dev 서버 포트 / 배포 도메인)
 
-이 다섯 개만 정해지면 위 디렉토리 구조대로 1주 내 MVP 가능합니다.
