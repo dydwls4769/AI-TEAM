@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyo
+streamlit_server.log
+streamlit_*.log
+.streamlit/credentials.toml
