@@ -40,3 +40,6 @@ ios/
 .vscode/
 .idea/
 .expo/
+# 운동 영상 (대용량 바이너리)
+스쿼트2.mp4
+*.mp4
