@@ -16,7 +16,7 @@
 
 ```bash
 # venv의 python으로 직접 실행
-.\venv\Scripts\python.exe -m streamlit run Streamlit_Upload.py
+.\venv\Scripts\python.exe -m streamlit run pose_feedback\Streamlit_Upload.py
 ```
 
 서버가 기동되면 브라우저가 자동으로 열리며, 수동 접속은 `http://localhost:8501` 입니다.
@@ -133,7 +133,11 @@
 
 ```
 AI_Exercise_Pose_Feedback-main/
-├── Streamlit_Upload.py         # 본 서비스 (영상 업로드 분석) - 신규
+├── pose_feedback/              # Streamlit_Upload v1~v4 (영상 업로드 분석)
+│   ├── Streamlit_Upload.py     # v1 - 신규
+│   ├── Streamlit_Upload2.py    # v2
+│   ├── Streamlit_Upload3.py    # v3
+│   └── Streamlit_Upload4.py    # v4 (최신)
 ├── Streamlit.py                # 원본 (웹캠 실시간) - 수정하지 않음
 ├── Streamlit_NoneYolo.py       # 원본 (웹캠, YOLO 없음) - 수정하지 않음
 ├── requirements_clean.txt      # 본 서비스용 패키지 목록 - 신규
