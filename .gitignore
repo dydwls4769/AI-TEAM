@@ -40,3 +40,6 @@ ios/
 .vscode/
 .idea/
 .expo/
+# routine - 개인 운동기록 제외
+routine/data/
+routine/__pycache__/
